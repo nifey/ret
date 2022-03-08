@@ -1,0 +1,7 @@
+benchmarks:
+  - benchmark 1
+  - benchmark 2
+data_dir: ''
+scripts_dir: ''
+files_to_collect:
+  - output.txt

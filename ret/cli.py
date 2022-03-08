@@ -1,8 +1,16 @@
 import click
+import yaml
 
 @click.group()
 def cli():
-    pass
+    # Read and parse retconfig.yml from current directory
+    with open("retconfig.yml", 'r') as configfile:
+        try:
+            config = yaml.safe_load(configfile)
+        except yaml.YAMLError as err:
+            print(err)
+            print("Error in parsing retconfig.yml")
+            exit(0)
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
