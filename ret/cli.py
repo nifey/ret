@@ -1,4 +1,6 @@
 import click
+import os
+import subprocess
 import yaml
 
 @click.group()
@@ -14,11 +16,28 @@ def cli(ctx):
             print("Error in parsing retconfig.yml")
             exit(0)
 
+def run_hook(config, hook_name, arguments=[]):
+    # Check if hook exists in config and in filesystem
+    if hook_name not in config['hooks']:
+        return
+    script = config['hooks'][hook_name]
+    if not os.path.exists(script):
+        print(f"Script {script} does not exist")
+        exit(0)
+    # Run hook and retrieve return value
+    command = [script]
+    command.extend(arguments)
+    returncode = subprocess.run(command).returncode
+    if returncode != 0:
+        print(f"{hook_name} hook failed with error code {returncode}")
+        exit(0)
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
 @click.option("--models", "-m", required=True, help="Comma separated list of benchmarks to run")
 @click.pass_context
 def run(ctx, benchmarks, models):
+    config = ctx.obj['config']
     print("Models to run    : ",end='')
     for model in models.split(","):
         print(f"{model} ", end='')
@@ -27,10 +46,22 @@ def run(ctx, benchmarks, models):
     if benchmarks:
         benchmarks = benchmarks.split(",")
     else:
-        benchmarks = ctx.obj['config']['benchmarks']
+        benchmarks = config['benchmarks']
     print("Benchmarks to run: ",end='')
     for benchmark in benchmarks:
         print(f"{benchmark} ", end='')
     print()
+
+    run_hook(config, 'pre_batch')
+    for benchmark in benchmarks:
+        # Create a folder for this run
+        run_dir = ""
+        # Write general information to run_info file
+        # Run hooks
+        run_hook(config, 'pre_run', arguments=[run_dir, benchmark])
+        run_hook(config, 'run', arguments=[run_dir, benchmark])
+        run_hook(config, 'post_run', arguments=[run_dir, benchmark])
+        run_hook(config, 'collect_logs', arguments=[run_dir, benchmark])
+    run_hook(config, 'post_batch')
 
 cli()
