@@ -16,7 +16,7 @@ def cli(ctx):
             print("Error in parsing retconfig.yml")
             exit(0)
 
-def run_hook(config, hook_name, arguments=[]):
+def run_hook(config, hook_name, arguments):
     # Check if hook exists in config and in filesystem
     if hook_name not in config['hooks']:
         return
@@ -34,14 +34,11 @@ def run_hook(config, hook_name, arguments=[]):
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
-@click.option("--models", "-m", required=True, help="Comma separated list of benchmarks to run")
+@click.option("--model-name", "-m", required=True, help="Name of current model")
 @click.pass_context
-def run(ctx, benchmarks, models):
+def run(ctx, benchmarks, model_name):
     config = ctx.obj['config']
-    print("Models to run    : ",end='')
-    for model in models.split(","):
-        print(f"{model} ", end='')
-    print()
+    data_dir = config['data_dir']
 
     if benchmarks:
         benchmarks = benchmarks.split(",")
@@ -52,16 +49,17 @@ def run(ctx, benchmarks, models):
         print(f"{benchmark} ", end='')
     print()
 
-    run_hook(config, 'pre_batch')
+    run_hook(config, 'pre_batch', [model_name, data_dir])
     for benchmark in benchmarks:
         # Create a folder for this run
-        run_dir = ""
+        run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
+        os.mkdir(run_dir)
         # Write general information to run_info file
         # Run hooks
-        run_hook(config, 'pre_run', arguments=[run_dir, benchmark])
-        run_hook(config, 'run', arguments=[run_dir, benchmark])
-        run_hook(config, 'post_run', arguments=[run_dir, benchmark])
-        run_hook(config, 'collect_logs', arguments=[run_dir, benchmark])
-    run_hook(config, 'post_batch')
+        arguments = [model_name, benchmark, run_dir]
+        run_hook(config, 'pre_run', arguments)
+        run_hook(config, 'run', arguments)
+        run_hook(config, 'post_run', arguments)
+    run_hook(config, 'post_batch', [model_name, data_dir])
 
 cli()

@@ -1,6 +1,6 @@
 benchmarks:
-  - benchmark 1
-  - benchmark 2
+  - benchmark_1
+  - benchmark_2
 data_dir: 'data'
 
 # Hooks
@@ -9,6 +9,5 @@ hooks:
   pre_run: 'scripts/pre_run.py'
   run: 'scripts/run.py'
   post_run: 'scripts/post_run.py'
-  collect_logs: 'scripts/collect_logs.py'
   post_batch: 'scripts/post_batch.py'
   get_metric: 'scripts/get_metric.py'
