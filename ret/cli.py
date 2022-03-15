@@ -3,6 +3,9 @@ import os
 import subprocess
 import yaml
 
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
+
 @click.group()
 @click.pass_context
 def cli(ctx):
@@ -32,6 +35,16 @@ def run_hook(config, hook_name, arguments):
         print(f"{hook_name} hook failed with error code {returncode}")
         exit(0)
 
+def execute_run(benchmark, config, model_name, data_dir):
+    # Create a folder for this run
+    run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
+    os.mkdir(run_dir)
+    # Run hooks
+    arguments = [model_name, benchmark, run_dir]
+    run_hook(config, 'pre_run', arguments)
+    run_hook(config, 'run', arguments)
+    run_hook(config, 'post_run', arguments)
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
 @click.option("--model-name", "-m", required=True, help="Name of current model")
@@ -50,16 +63,12 @@ def run(ctx, benchmarks, model_name):
     print()
 
     run_hook(config, 'pre_batch', [model_name, data_dir])
-    for benchmark in benchmarks:
-        # Create a folder for this run
-        run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
-        os.mkdir(run_dir)
-        # Write general information to run_info file
-        # Run hooks
-        arguments = [model_name, benchmark, run_dir]
-        run_hook(config, 'pre_run', arguments)
-        run_hook(config, 'run', arguments)
-        run_hook(config, 'post_run', arguments)
+
+    run_function = partial(execute_run, config=config, model_name=model_name, data_dir=data_dir)
+    with ProcessPoolExecutor() as executor:
+        list(executor.map(run_function,
+                          benchmarks))
+
     run_hook(config, 'post_batch', [model_name, data_dir])
 
 cli()
