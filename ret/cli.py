@@ -2,6 +2,8 @@ import click
 import os
 import subprocess
 import yaml
+import numpy as np
+import matplotlib.pyplot as mplt
 import plot as plt
 
 from functools import partial
@@ -104,15 +106,40 @@ def plot(ctx, benchmarks, models, metrics):
     print()
 
     for metric in metrics:
+        if metric not in config['metrics']:
+            print(f"The Metric {metric} is not found in retconfig")
+            continue
+        # TODO add metric_groups
         # Collect data for metric
-        plot_data = {}
-        for model in models:
-            plot_data[model] = []
-            for benchmark in benchmarks:
-                plot_data[model].append(0)
-            for benchmark in benchmarks:
-                run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
-                data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
-                plot_data[model][benchmarks.index(benchmark)] = float(data)
-        plt.bar_plot(plot_data, benchmarks, title=metric, gmean=True)
+        if config['metrics'][metric]['type'] == 'bar':
+            title = metric
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            gmean = False
+            if 'gmean' in config['metrics'][metric]:
+                gmean = config['metrics'][metric]['gmean']
+            plot_data = {}
+            for model in models:
+                plot_data[model] = []
+                for benchmark in benchmarks:
+                    plot_data[model].append(0)
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+                    plot_data[model][benchmarks.index(benchmark)] = float(data)
+            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean)
+        elif config['metrics'][metric]['type'] == 'cdf':
+            title = metric
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            for model in models:
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    comma_separated_values = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+                    data = list(map(int, comma_separated_values.split(",")))
+                    val, cnts = np.unique(data, return_counts=True)
+                    mplt.plot(val,np.cumsum(cnts))
+                    mplt.title = f"{title} : {benchmark}"
+                    mplt.show()
+
 cli()
