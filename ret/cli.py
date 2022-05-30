@@ -175,5 +175,33 @@ def plot(ctx, benchmarks, models, metrics):
                     bottom += plot_data[i]
                 ax.legend()
                 mplt.show()
+        elif config['metrics'][metric]['type'] == 'stacked_bar_per_run':
+            title = metric
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            plot_bar_labels = config['metrics'][metric]['stack_labels']
+            for model in models:
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    epoch_data = list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True).strip().split(":"))
+
+                    plot_data = []
+                    for i in range(len(plot_bar_labels)):
+                        plot_data.append([])
+
+                    for epoch in epoch_data:
+                        for i, num in enumerate(epoch.split(",")):
+                            plot_data[i].append(float(num))
+
+                    bottom = np.zeros(len(plot_data[0]))
+                    x_vals = list(range(1,len(plot_data[0])+1))
+                    fig, ax = mplt.subplots()
+                    ax.set_title(f"{benchmark} : {title}")
+                    for i, stack_bar in enumerate(plot_bar_labels):
+                        ax.bar(x_vals, plot_data[i], label=stack_bar, bottom=bottom)
+                        bottom += plot_data[i]
+                    ax.legend()
+                    mplt.show()
+
 
 cli()
