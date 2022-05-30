@@ -152,5 +152,28 @@ def plot(ctx, benchmarks, models, metrics):
                     mplt.plot(val,np.cumsum(cnts))
                     mplt.title = f"{title} : {benchmark}"
                     mplt.show()
+        elif config['metrics'][metric]['type'] == 'stacked_bar':
+            title = metric
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            plot_bar_labels = config['metrics'][metric]['stack_labels']
+            for model in models:
+                plot_data = []
+                for stack_bar in plot_bar_labels:
+                    plot_data.append(np.zeros(len(benchmarks)))
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    comma_separated_values = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+                    for i, data_item in enumerate(list(map(float, comma_separated_values.split(",")))):
+                        plot_data[i][benchmarks.index(benchmark)] = data_item
+
+                bottom = np.zeros(len(benchmarks))
+                fig, ax = mplt.subplots()
+                ax.set_title(title)
+                for i, stack_bar in enumerate(plot_bar_labels):
+                    ax.bar(benchmarks, plot_data[i], label=stack_bar, bottom=bottom)
+                    bottom += plot_data[i]
+                ax.legend()
+                mplt.show()
 
 cli()
