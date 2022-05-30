@@ -99,17 +99,28 @@ def plot(ctx, benchmarks, models, metrics):
     for model in models:
         print(f"{model} ", end='')
     print()
+
     metrics = metrics.split(",")
+    metrics_to_calculate = []
+    for metric in metrics:
+        if metric not in config['metrics'] and metric not in config['metric_groups']:
+            print(f"The Metric {metric} is not found in retconfig")
+            continue
+        elif metric in config['metric_groups']:
+            # Valid Metric group
+            for m in config['metric_groups'][metric]:
+                metrics_to_calculate.append(m)
+        else:
+            # Valid metric
+            metrics_to_calculate.append(metric)
+    metrics = metrics_to_calculate
+
     print("Metrics to plot: ",end='')
     for metric in metrics:
         print(f"{metric} ", end='')
     print()
 
     for metric in metrics:
-        if metric not in config['metrics']:
-            print(f"The Metric {metric} is not found in retconfig")
-            continue
-        # TODO add metric_groups
         # Collect data for metric
         if config['metrics'][metric]['type'] == 'bar':
             title = metric
