@@ -202,6 +202,23 @@ def plot(ctx, benchmarks, models, metrics):
                         bottom += plot_data[i]
                     ax.legend()
                     mplt.show()
-
+        elif config['metrics'][metric]['type'] == 'violin':
+            title = metric
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            fig, ax = mplt.subplots()
+            ax.set_title(f"{title}")
+            ax.set_xticks(range(1,len(benchmarks)+1), benchmarks)
+            for model in models:
+                plot_data = []
+                for benchmark in benchmarks:
+                    plot_data.append([])
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+                    data = list(map(float, data.strip().split(" ")))
+                    plot_data[benchmarks.index(benchmark)] = data
+                ax.violinplot(plot_data, showmeans=True)
+            mplt.show()
 
 cli()
