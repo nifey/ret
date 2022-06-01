@@ -220,5 +220,26 @@ def plot(ctx, benchmarks, models, metrics):
                     plot_data[benchmarks.index(benchmark)] = data
                 ax.violinplot(plot_data, showmeans=True)
             mplt.show()
+        elif config['metrics'][metric]['type'] == 'lines_per_run':
+            if 'title' in config['metrics'][metric]:
+                title = config['metrics'][metric]['title']
+            line_labels = config['metrics'][metric]['line_labels']
+            for model in models:
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    line_datas = list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True).strip().split(":"))
+
+                    plot_data = []
+                    for line in line_datas:
+                        plot_data.append([float(x) for x in line.split(",")])
+
+                    x_vals = list(range(1,len(plot_data[0])+1))
+                    fig, ax = mplt.subplots()
+                    ax.set_title(f"{benchmark} : {title}")
+                    for i, line_label in enumerate(line_labels):
+                        ax.plot(x_vals, plot_data[i], label=line_label)
+                    ax.legend()
+                    mplt.show()
+ 
 
 cli()
