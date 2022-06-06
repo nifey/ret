@@ -157,24 +157,37 @@ def plot(ctx, benchmarks, models, metrics):
             if 'title' in config['metrics'][metric]:
                 title = config['metrics'][metric]['title']
             plot_bar_labels = config['metrics'][metric]['stack_labels']
+            plot_data = {}
+            colors = {}
+            fig, ax = mplt.subplots()
+            ax.set_title(title)
+            bar_width = 0.9
+            per_model_width = bar_width / len(models)
+            initial_x_vals = np.array(range(1,len(benchmarks)+1)) - 0.5 * bar_width + 0.5 * per_model_width
             for model in models:
-                plot_data = []
+                plot_data[model] = []
                 for stack_bar in plot_bar_labels:
-                    plot_data.append(np.zeros(len(benchmarks)))
+                    plot_data[model].append(np.zeros(len(benchmarks)))
                 for benchmark in benchmarks:
                     run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
                     comma_separated_values = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     for i, data_item in enumerate(list(map(float, comma_separated_values.split(",")))):
-                        plot_data[i][benchmarks.index(benchmark)] = data_item
+                        plot_data[model][i][benchmarks.index(benchmark)] = data_item
 
                 bottom = np.zeros(len(benchmarks))
-                fig, ax = mplt.subplots()
-                ax.set_title(title)
+                x_vals = initial_x_vals + models.index(model) * per_model_width
                 for i, stack_bar in enumerate(plot_bar_labels):
-                    ax.bar(benchmarks, plot_data[i], label=stack_bar, bottom=bottom)
-                    bottom += plot_data[i]
-                ax.legend()
-                mplt.show()
+                    if stack_bar not in colors:
+                        bar = ax.bar(x_vals, plot_data[model][i], label=stack_bar, bottom=bottom, width=per_model_width)
+                        colors[stack_bar] = bar.patches[0].get_facecolor()
+                    else:
+                        ax.bar(x_vals, plot_data[model][i], color=colors[stack_bar], bottom=bottom, width=per_model_width)
+                    bottom += plot_data[model][i]
+
+            x_vals = np.array(range(1,len(benchmarks)+1))
+            ax.set_xticks(x_vals, benchmarks)
+            ax.legend()
+            mplt.show()
         elif config['metrics'][metric]['type'] == 'stacked_bar_per_run':
             title = metric
             if 'title' in config['metrics'][metric]:
