@@ -41,21 +41,22 @@ def run_hook(config, hook_name, arguments, capture_output=False):
     if capture_output:
         return str(completed_process.stdout, 'UTF-8')
 
-def execute_run(benchmark, config, model_name, data_dir):
-    # Create a folder for this run
-    run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
-    os.mkdir(run_dir)
-    # Run hooks
-    arguments = [model_name, benchmark, run_dir]
-    run_hook(config, 'pre_run', arguments)
-    run_hook(config, 'run', arguments)
-    run_hook(config, 'post_run', arguments)
+def execute_run(benchmark, config, models, data_dir):
+    for model_name in models:
+        # Create a folder for this run
+        run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
+        os.mkdir(run_dir)
+        # Run hooks
+        arguments = [model_name, benchmark, run_dir]
+        run_hook(config, 'pre_run', arguments)
+        run_hook(config, 'run', arguments)
+        run_hook(config, 'post_run', arguments)
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
-@click.option("--model-name", "-m", required=True, help="Name of current model")
+@click.option("--models", "-m", required=True, help="Comma separated list of models to run")
 @click.pass_context
-def run(ctx, benchmarks, model_name):
+def run(ctx, benchmarks, models):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
@@ -68,14 +69,21 @@ def run(ctx, benchmarks, model_name):
         print(f"{benchmark} ", end='')
     print()
 
-    run_hook(config, 'pre_batch', [model_name, data_dir])
+    model_names = models
+    models = models.split(",")
+    print("Models to plot: ",end='')
+    for model in models:
+        print(f"{model} ", end='')
+    print()
 
-    run_function = partial(execute_run, config=config, model_name=model_name, data_dir=data_dir)
+    run_hook(config, 'pre_batch', [model_names, data_dir])
+
+    run_function = partial(execute_run, config=config, models=models, data_dir=data_dir)
     with ProcessPoolExecutor() as executor:
         list(executor.map(run_function,
                           benchmarks))
 
-    run_hook(config, 'post_batch', [model_name, data_dir])
+    run_hook(config, 'post_batch', [model_names, data_dir])
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
