@@ -102,11 +102,24 @@ def plot(ctx, benchmarks, models, metrics):
     for benchmark in benchmarks:
         print(f"{benchmark} ", end='')
     print()
+
     models = models.split(",")
+    new_models = []
+    model_names = {}
     print("Models to plot: ",end='')
     for model in models:
-        print(f"{model} ", end='')
+        with open(os.path.join("models", f"{model}.yml"), 'r') as configfile:
+            try:
+                model_config = yaml.safe_load(configfile)
+                new_models.append(model)
+                model_name = model_config['config']['model_name']
+                model_names[model] = model_name
+                print(f"{model_name} ", end='')
+            except yaml.YAMLError as err:
+                print(err)
+                print(f"Error in parsing {model}.yml")
     print()
+    models = new_models
 
     metrics = metrics.split(",")
     metrics_to_calculate = []
@@ -139,13 +152,13 @@ def plot(ctx, benchmarks, models, metrics):
                 gmean = config['metrics'][metric]['gmean']
             plot_data = {}
             for model in models:
-                plot_data[model] = []
+                plot_data[model_names[model]] = []
                 for benchmark in benchmarks:
-                    plot_data[model].append(0)
+                    plot_data[model_names[model]].append(0)
                 for benchmark in benchmarks:
                     run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
-                    plot_data[model][benchmarks.index(benchmark)] = float(data)
+                    plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
             plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean)
         elif config['metrics'][metric]['type'] == 'cdf':
             title = metric
