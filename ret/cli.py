@@ -150,6 +150,11 @@ def plot(ctx, benchmarks, models, metrics):
             ylabel = ""
             if 'ylabel' in config['metrics'][metric]:
                 ylabel = config['metrics'][metric]['ylabel']
+            ylim = None
+            if 'ylim' in config['metrics'][metric]:
+                lower_ylim = float(config['metrics'][metric]['ylim']['min'])
+                upper_ylim = float(config['metrics'][metric]['ylim']['max'])
+                ylim = (lower_ylim, upper_ylim)
             gmean = False
             if 'gmean' in config['metrics'][metric]:
                 gmean = config['metrics'][metric]['gmean']
@@ -162,7 +167,7 @@ def plot(ctx, benchmarks, models, metrics):
                     run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
-            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, ylabel=ylabel)
+            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, ylabel=ylabel, ylim=ylim)
         elif config['metrics'][metric]['type'] == 'cdf':
             title = metric
             if 'title' in config['metrics'][metric]:

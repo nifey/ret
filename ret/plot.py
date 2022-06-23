@@ -8,7 +8,7 @@ def calc_gmean(numbers):
                               map(math.log, numbers))
     return pow(math.e, sum_of_logs/len(numbers))
 
-def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel=""):
+def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel="", ylim=None):
     """Create a Bar plot
 
     Takes as argument a dict from (model => [model_value for each benchmark])
@@ -16,6 +16,8 @@ def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel=""):
     if gmean:
         for model in data.keys():
             data[model].append(calc_gmean(data[model]))
+    if ylim:
+        plt.ylim(ylim)
 
     total_width = 0.8
     bar_width = total_width/len(data)
@@ -23,6 +25,13 @@ def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel=""):
         current_plot_data = data[model]
         start_offset = (total_width/2) - (2*i+1)*bar_width/2
         plt.bar(np.arange(len(current_plot_data)) - start_offset, current_plot_data, width=bar_width, label=model)
+        if ylim:
+            for item_i, value in enumerate(current_plot_data):
+                max_val = ylim[1]
+                if value > max_val:
+                    plt.annotate(str(round(value,2)),
+                                 xy=(item_i - total_width/2 + (2*i+1)*(bar_width/2) - start_offset, max_val - (max_val*0.02)),
+                                 ha='center').draggable()
     plt.title(title or "Bar chart")
     plt.ylabel(ylabel)
     xticks = xticks[:]
