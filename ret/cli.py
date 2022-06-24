@@ -42,12 +42,12 @@ def run_hook(config, hook_name, arguments, capture_output=False):
         return str(completed_process.stdout, 'UTF-8')
 
 def execute_run(benchmark, config, models, data_dir):
-    for model_name in models:
+    for model in models:
         # Create a folder for this run
-        run_dir = os.path.join(os.getcwd(), data_dir, f"{model_name}_{benchmark}")
-        os.mkdir(run_dir)
+        run_dir = os.path.join(data_dir, model, benchmark)
+        os.makedirs(run_dir)
         # Run hooks
-        arguments = [model_name, benchmark, run_dir]
+        arguments = [model, benchmark, run_dir]
         run_hook(config, 'pre_run', arguments)
         run_hook(config, 'run', arguments)
         run_hook(config, 'post_run', arguments)
@@ -165,7 +165,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                 for benchmark in benchmarks:
                     plot_data[model_names[model]].append(0)
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
             plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, filename=savefig, ylabel=ylabel, ylim=ylim)
@@ -175,7 +175,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                 title = config['metrics'][metric]['title']
             for model in models:
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     comma_separated_values = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     data = list(map(int, comma_separated_values.split(",")))
                     val, cnts = np.unique(data, return_counts=True)
@@ -199,7 +199,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                 for stack_bar in plot_bar_labels:
                     plot_data[model].append(np.zeros(len(benchmarks)))
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     comma_separated_values = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     for i, data_item in enumerate(list(map(float, comma_separated_values.split(",")))):
                         plot_data[model][i][benchmarks.index(benchmark)] = data_item
@@ -225,7 +225,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
             plot_bar_labels = config['metrics'][metric]['stack_labels']
             for model in models:
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     epoch_data = list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True).strip().split(":"))
 
                     plot_data = []
@@ -257,7 +257,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                 for benchmark in benchmarks:
                     plot_data.append([])
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     data = list(map(float, data.strip().split(" ")))
                     plot_data[benchmarks.index(benchmark)] = data
@@ -269,7 +269,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
             line_labels = config['metrics'][metric]['line_labels']
             for model in models:
                 for benchmark in benchmarks:
-                    run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
+                    run_dir = os.path.join(data_dir, model, benchmark)
                     line_datas = list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True).strip().split(":"))
 
                     plot_data = []
