@@ -89,8 +89,9 @@ def run(ctx, benchmarks, models):
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to plot")
 @click.option("--metrics", "-M", required=True, help="Comma separated list of metrics to plot")
+@click.option("--savefig", "-s", help="Filename to save the plot. If this option is not specified, the plot is displayed")
 @click.pass_context
-def plot(ctx, benchmarks, models, metrics):
+def plot(ctx, benchmarks, models, metrics, savefig):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
@@ -167,7 +168,7 @@ def plot(ctx, benchmarks, models, metrics):
                     run_dir = os.path.join(os.getcwd(), data_dir, f"{model}_{benchmark}")
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
-            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, ylabel=ylabel, ylim=ylim)
+            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, filename=savefig, ylabel=ylabel, ylim=ylim)
         elif config['metrics'][metric]['type'] == 'cdf':
             title = metric
             if 'title' in config['metrics'][metric]:

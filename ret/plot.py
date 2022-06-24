@@ -8,6 +8,20 @@ def calc_gmean(numbers):
                               map(math.log, numbers))
     return pow(math.e, sum_of_logs/len(numbers))
 
+def show_or_save_figure(mplt, filename):
+    # If no filename was specified display the plot
+    # else save the plot with the given filename
+    if filename:
+        aspect_ratio = .2
+        x_left, x_right = mplt.xlim()
+        y_low, y_high = mplt.ylim()
+        mplt.gca().set_aspect(abs((x_right-x_left)/(y_low-y_high))*aspect_ratio)
+
+        mplt.tight_layout()
+        mplt.savefig(filename, bbox_inches='tight', pad_inches = 0.1)
+    else:
+        mplt.show()
+
 def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel="", ylim=None):
     """Create a Bar plot
 
@@ -39,8 +53,7 @@ def bar_plot(data, xticks, title=None, filename=None, gmean=False, ylabel="", yl
         xticks.append("gmean")
     plt.xticks(np.arange(len(xticks)), xticks)
     plt.legend()
-    #plt.savefig(filename or f"plots/{title}.jpg")
-    plt.show()
+    show_or_save_figure(plt, filename)
 
 def stacked_bar_plot():
     pass
@@ -51,5 +64,4 @@ def violin_plot(data, title=None, xticks=None, filename=None):
     if xticks:
         plt.xticks(np.arange(len(xticks))+1, xticks)
     plt.legend()
-    plt.savefig(f"plots/{title}.jpg")
-    plt.show()
+    show_or_save_figure(plt, filename)
