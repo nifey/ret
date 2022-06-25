@@ -83,7 +83,7 @@ def run(ctx, benchmarks, models, j):
 
     model_names = models
     models = models.split(",")
-    print("Models to plot: ",end='')
+    print("Models to run: ",end='')
     for model in models:
         print(f"{model} ", end='')
     print()
