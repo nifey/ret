@@ -66,8 +66,9 @@ def execute_in_parallel(model_benchmark, config, data_dir):
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to run")
+@click.option("-j", help="Maximum number of runs to execute in parallel")
 @click.pass_context
-def run(ctx, benchmarks, models):
+def run(ctx, benchmarks, models, j):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
@@ -89,23 +90,28 @@ def run(ctx, benchmarks, models):
 
     run_hook(config, 'pre_batch', [model_names, data_dir])
 
+    # Create a ProcessPoolExecutor to run in parallel
+    if config['run_contraint'] != 'serial':
+        if j:
+            j = int(j)
+            executor = ProcessPoolExecutor(max_workers=j)
+        else:
+            executor = ProcessPoolExecutor()
+
     if config['run_contraint'] == 'serial':
         for model in models:
             for benchmark in benchmarks:
                 execute_run(benchmark, config, model, data_dir)
     elif config['run_contraint'] == 'models_in_parallel':
         run_function = partial(execute_models_in_parallel, config=config, benchmarks=benchmarks, data_dir=data_dir)
-        with ProcessPoolExecutor() as executor:
-            list(executor.map(run_function, models))
+        list(executor.map(run_function, models))
     elif config['run_contraint'] == 'benchmarks_in_parallel':
         run_function = partial(execute_benchmarks_in_parallel, config=config, models=models, data_dir=data_dir)
-        with ProcessPoolExecutor() as executor:
-            list(executor.map(run_function, benchmarks))
+        list(executor.map(run_function, benchmarks))
     elif config['run_contraint'] == 'parallel':
         runs = [(model, benchmark) for model in models for benchmark in benchmarks]
         run_function = partial(execute_in_parallel, config=config, data_dir=data_dir)
-        with ProcessPoolExecutor() as executor:
-            list(executor.map(run_function, runs))
+        list(executor.map(run_function, runs))
 
     run_hook(config, 'post_batch', [model_names, data_dir])
 
