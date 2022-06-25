@@ -41,16 +41,27 @@ def run_hook(config, hook_name, arguments, capture_output=False):
     if capture_output:
         return str(completed_process.stdout, 'UTF-8')
 
-def execute_run(benchmark, config, models, data_dir):
+def execute_run(benchmark, config, model, data_dir):
+    # Create a folder for this run
+    run_dir = os.path.join(data_dir, model, benchmark)
+    os.makedirs(run_dir)
+    # Run hooks
+    arguments = [model, benchmark, run_dir]
+    run_hook(config, 'pre_run', arguments)
+    run_hook(config, 'run', arguments)
+    run_hook(config, 'post_run', arguments)
+
+def execute_models_in_parallel(benchmarks, config, model, data_dir):
+    for benchmark in benchmarks:
+        execute_run(benchmark, config, model, data_dir)
+
+def execute_benchmarks_in_parallel(benchmark, config, models, data_dir):
     for model in models:
-        # Create a folder for this run
-        run_dir = os.path.join(data_dir, model, benchmark)
-        os.makedirs(run_dir)
-        # Run hooks
-        arguments = [model, benchmark, run_dir]
-        run_hook(config, 'pre_run', arguments)
-        run_hook(config, 'run', arguments)
-        run_hook(config, 'post_run', arguments)
+        execute_run(benchmark, config, model, data_dir)
+
+def execute_in_parallel(model_benchmark, config, data_dir):
+    model, benchmark = model_benchmark
+    execute_run(benchmark, config, model, data_dir)
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
@@ -78,10 +89,23 @@ def run(ctx, benchmarks, models):
 
     run_hook(config, 'pre_batch', [model_names, data_dir])
 
-    run_function = partial(execute_run, config=config, models=models, data_dir=data_dir)
-    with ProcessPoolExecutor() as executor:
-        list(executor.map(run_function,
-                          benchmarks))
+    if config['run_contraint'] == 'serial':
+        for model in models:
+            for benchmark in benchmarks:
+                execute_run(benchmark, config, model, data_dir)
+    elif config['run_contraint'] == 'models_in_parallel':
+        run_function = partial(execute_models_in_parallel, config=config, benchmarks=benchmarks, data_dir=data_dir)
+        with ProcessPoolExecutor() as executor:
+            list(executor.map(run_function, models))
+    elif config['run_contraint'] == 'benchmarks_in_parallel':
+        run_function = partial(execute_benchmarks_in_parallel, config=config, models=models, data_dir=data_dir)
+        with ProcessPoolExecutor() as executor:
+            list(executor.map(run_function, benchmarks))
+    elif config['run_contraint'] == 'parallel':
+        runs = [(model, benchmark) for model in models for benchmark in benchmarks]
+        run_function = partial(execute_in_parallel, config=config, data_dir=data_dir)
+        with ProcessPoolExecutor() as executor:
+            list(executor.map(run_function, runs))
 
     run_hook(config, 'post_batch', [model_names, data_dir])
 

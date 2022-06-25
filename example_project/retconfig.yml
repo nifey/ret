@@ -2,6 +2,16 @@ benchmarks:
   - benchmark_1
   - benchmark_2
 data_dir: 'data'
+run_contraint: 'parallel'
+  # Used to specify which models or benchmarks can run concurrently
+  # 'serial' => One run executes at any time
+  # 'models_in_parallel' => Multiple models can run in parallel. But in each model the benchmarks are executed serially
+  #           eg: model_1-benchmark_1 and model_2-benchmark_1 can execute concurrently
+  #               model_1-benchmark_1 and model_1-benchmark_2 cannot execute concurrently
+  # 'benchmarks_in_parallel' => Multiple benchmarks can run in parallel. But in each benchmark the models are executed serially
+  #           eg: model_1-benchmark_1 and model_1-benchmark_2 can execute concurrently
+  #               model_1-benchmark_1 and model_2-benchmark_1 cannot execute concurrently
+  # 'parallel' => No constraints on which model or benchmark can run concurrently
 
 # Hooks
 hooks:
