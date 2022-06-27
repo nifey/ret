@@ -135,22 +135,17 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     print()
 
     models = models.split(",")
-    new_models = []
     model_names = {}
     print("Models to plot: ",end='')
     for model in models:
-        with open(os.path.join("models", f"{model}.yml"), 'r') as configfile:
-            try:
-                model_config = yaml.safe_load(configfile)
-                new_models.append(model)
-                model_name = model_config['config']['model_name']
-                model_names[model] = model_name
-                print(f"{model_name} ", end='')
-            except yaml.YAMLError as err:
-                print(err)
-                print(f"Error in parsing {model}.yml")
+            model_names[model] = model
+    if 'model_names' in config:
+        for model in models:
+            if model in config['model_names']:
+                model_names[model] = config['model_names'][model]
+    for model in models:
+        print (f"{model_names[model]} ")
     print()
-    models = new_models
 
     metrics = metrics.split(",")
     metrics_to_calculate = []
