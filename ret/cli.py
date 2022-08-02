@@ -44,6 +44,9 @@ def run_hook(config, hook_name, arguments, capture_output=False):
 def execute_run(benchmark, config, model, data_dir):
     # Create a folder for this run
     run_dir = os.path.join(data_dir, model, benchmark)
+    if os.path.isdir(run_dir):
+        print (f"{run_dir} already exists. Skipping run")
+        return
     os.makedirs(run_dir)
     # Run hooks
     arguments = [model, benchmark, run_dir]
