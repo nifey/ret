@@ -311,6 +311,10 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                         ax.plot(x_vals, plot_data[i], label=line_label)
                     ax.legend()
                     mplt.show()
- 
+        elif config['metrics'][metric]['type'] == 'script':
+            for model in models:
+                for benchmark in benchmarks:
+                    run_dir = os.path.join(data_dir, model, benchmark)
+                    list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True))
 
 cli()
