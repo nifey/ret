@@ -172,21 +172,8 @@ def plot(ctx, benchmarks, models, metrics, savefig):
 
     for metric in metrics:
         # Collect data for metric
-        if config['metrics'][metric]['type'] == 'bar':
-            title = metric
-            if 'title' in config['metrics'][metric]:
-                title = config['metrics'][metric]['title']
-            ylabel = ""
-            if 'ylabel' in config['metrics'][metric]:
-                ylabel = config['metrics'][metric]['ylabel']
-            ylim = None
-            if 'ylim' in config['metrics'][metric]:
-                lower_ylim = float(config['metrics'][metric]['ylim']['min'])
-                upper_ylim = float(config['metrics'][metric]['ylim']['max'])
-                ylim = (lower_ylim, upper_ylim)
-            gmean = False
-            if 'gmean' in config['metrics'][metric]:
-                gmean = config['metrics'][metric]['gmean']
+        plot_config = config['metrics'][metric]
+        if plot_config['type'] == 'bar':
             plot_data = {}
             for model in models:
                 plot_data[model_names[model]] = []
@@ -196,7 +183,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                     run_dir = os.path.join(data_dir, model, benchmark)
                     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
                     plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
-            plt.bar_plot(plot_data, benchmarks, title=title, gmean=gmean, filename=savefig, ylabel=ylabel, ylim=ylim)
+            plt.bar_plot(plot_data, benchmarks, plot_config, filename=savefig)
         elif config['metrics'][metric]['type'] == 'cdf':
             title = metric
             if 'title' in config['metrics'][metric]:
