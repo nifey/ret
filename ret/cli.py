@@ -147,7 +147,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
             if model in config['model_names']:
                 model_names[model] = config['model_names'][model]
     for model in models:
-        print (f"{model_names[model]} ")
+        print (f"{model_names[model]} ",end='')
     print()
 
     metrics = metrics.split(",")
