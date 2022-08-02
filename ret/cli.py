@@ -294,7 +294,10 @@ def plot(ctx, benchmarks, models, metrics, savefig):
         elif config['metrics'][metric]['type'] == 'lines_per_run':
             if 'title' in config['metrics'][metric]:
                 title = config['metrics'][metric]['title']
-            line_labels = config['metrics'][metric]['line_labels']
+            if 'line_labels' in config['metrics'][metric]:
+                line_labels = config['metrics'][metric]['line_labels']
+            else:
+                line_labels = []
             for model in models:
                 for benchmark in benchmarks:
                     run_dir = os.path.join(data_dir, model, benchmark)
@@ -307,8 +310,11 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                     x_vals = list(range(1,len(plot_data[0])+1))
                     fig, ax = mplt.subplots()
                     ax.set_title(f"{benchmark} : {title}")
-                    for i, line_label in enumerate(line_labels):
-                        ax.plot(x_vals, plot_data[i], label=line_label)
+                    for i in range(0,len(line_datas)):
+                        if i < len(line_labels):
+                            ax.plot(x_vals, plot_data[i], label=line_labels[i])
+                        else:
+                            ax.plot(x_vals, plot_data[i])
                     ax.legend()
                     mplt.show()
         elif config['metrics'][metric]['type'] == 'script':
