@@ -130,8 +130,42 @@ def bar_plot(data, xticks, plot_config, filename=None):
 
     save_or_show_figure(plot_config, filename)
 
-def stacked_bar_plot():
-    pass
+def stacked_bar_plot(data, xticks, plot_config, filename=None):
+    """Create a stacked bar plot
+
+    :param data: Dictionary with data to plot (model => [[model_value for each benchmark] for each stack]))
+    :type data: dict
+
+    :param xticks: List of benchmarks
+    :type xticks: list
+
+    :param plot_config: Plot configuration
+    :type plot_config: dict
+
+    :param filename: File name to save the plot
+    :type filename: str
+    """
+    fig, ax = generic_plot(plot_config)
+    set_plot_xticks(ax, xticks, plot_config, data)
+
+    models = data.keys()
+    colors = {}
+    bar_width = 0.8
+    plot_bar_labels = plot_config['stack_labels']
+    per_model_width = bar_width / len(models)
+    initial_x_vals = np.array(range(0,len(xticks))) - 0.5 * bar_width + 0.5 * per_model_width
+    for j, model in enumerate(models):
+        bottom = np.zeros(len(xticks))
+        x_vals = initial_x_vals + j * per_model_width
+        for i, stack_bar in enumerate(plot_bar_labels):
+            if stack_bar not in colors:
+                bar = ax.bar(x_vals, data[model][i], label=stack_bar, bottom=bottom, width=per_model_width)
+                colors[stack_bar] = bar.patches[0].get_facecolor()
+            else:
+                ax.bar(x_vals, data[model][i], color=colors[stack_bar], bottom=bottom, width=per_model_width)
+            bottom += data[model][i]
+
+    save_or_show_figure(plot_config, filename)
 
 def violin_plot(data, title=None, xticks=None, filename=None):
     plt.violinplot(data, showmeans=True)
