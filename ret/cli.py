@@ -2,12 +2,13 @@ import click
 import os
 import subprocess
 import yaml
+import itertools
 import numpy as np
 import matplotlib.pyplot as mplt
 import plot as plt
 
 from functools import partial
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 
 @click.group()
 @click.pass_context
@@ -118,6 +119,13 @@ def run(ctx, benchmarks, models, j):
 
     run_hook(config, 'post_batch', [model_names, data_dir])
 
+def get_model_benchmark_data(mb_tuple, config, metric):
+    model, benchmark = mb_tuple
+    data_dir = config['data_dir']
+    run_dir = os.path.join(data_dir, model, benchmark)
+    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+    return float(data)
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to plot")
@@ -138,16 +146,20 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     print()
 
     models = models.split(",")
-    model_names = {}
-    print("Models to plot: ",end='')
-    for model in models:
-            model_names[model] = model
+    model_names = []
     if 'model_names' in config:
         for model in models:
             if model in config['model_names']:
-                model_names[model] = config['model_names'][model]
-    for model in models:
-        print (f"{model_names[model]} ",end='')
+                model_names.append(config['model_names'][model])
+            else:
+                model_names.append(model)
+    else:
+        for model in models:
+            model_names.append(model)
+
+    print("Models to plot: ",end='')
+    for model_name in model_names:
+        print (f"{model_name} ",end='')
     print()
 
     metrics = metrics.split(",")
@@ -171,18 +183,13 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     print()
 
     for metric in metrics:
-        # Collect data for metric
+        data_read_function = partial(get_model_benchmark_data, config=config, metric=metric)
         plot_config = config['metrics'][metric]
         if plot_config['type'] == 'bar':
-            plot_data = {}
-            for model in models:
-                plot_data[model_names[model]] = []
-                for benchmark in benchmarks:
-                    plot_data[model_names[model]].append(0)
-                for benchmark in benchmarks:
-                    run_dir = os.path.join(data_dir, model, benchmark)
-                    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
-                    plot_data[model_names[model]][benchmarks.index(benchmark)] = float(data)
+            with ThreadPoolExecutor() as e:
+                data = np.array(list(e.map(data_read_function, itertools.product(models,benchmarks))))
+                data = data.reshape(len(models), len(benchmarks))
+            plot_data = dict(zip(model_names,data.tolist()))
             plt.bar_plot(plot_data, benchmarks, plot_config, filename=savefig)
         elif config['metrics'][metric]['type'] == 'cdf':
             title = metric
