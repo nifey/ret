@@ -216,33 +216,24 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                     transposed_data.append(model_data.transpose().tolist())
             plot_data = dict(zip(model_names,transposed_data))
             plt.stacked_bar_plot(plot_data, benchmarks, plot_config, filename=savefig)
-        elif config['metrics'][metric]['type'] == 'stacked_bar_per_run':
-            title = metric
-            if 'title' in config['metrics'][metric]:
-                title = config['metrics'][metric]['title']
-            plot_bar_labels = config['metrics'][metric]['stack_labels']
-            for model in models:
-                for benchmark in benchmarks:
-                    run_dir = os.path.join(data_dir, model, benchmark)
-                    epoch_data = list(run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True).strip().split(":"))
+        elif plot_config['type'] == 'stacked_bar_per_run':
+            with ThreadPoolExecutor() as e:
+                data = list(e.map(data_read_function, itertools.product(models,benchmarks)))
 
-                    plot_data = []
-                    for i in range(len(plot_bar_labels)):
-                        plot_data.append([])
-
-                    for epoch in epoch_data:
-                        for i, num in enumerate(epoch.split(",")):
-                            plot_data[i].append(float(num))
-
-                    bottom = np.zeros(len(plot_data[0]))
-                    x_vals = list(range(1,len(plot_data[0])+1))
-                    fig, ax = mplt.subplots()
-                    ax.set_title(f"{benchmark} : {title}")
-                    for i, stack_bar in enumerate(plot_bar_labels):
-                        ax.bar(x_vals, plot_data[i], label=stack_bar, bottom=bottom)
-                        bottom += plot_data[i]
-                    ax.legend()
-                    mplt.show()
+            index = 0
+            original_title = ""
+            if 'title' in plot_config:
+                original_title = plot_config['title']
+            with ThreadPoolExecutor() as e:
+                for model in models:
+                    for benchmark in benchmarks:
+                        epoch_data = data[index].strip().split(":")
+                        epoch_data = np.array(list(e.map (lambda y: [float(z) for z in y],
+                                                          e.map(lambda x: x.rstrip().split(","), epoch_data))), dtype=list)
+                        epoch_data = epoch_data.transpose().tolist()
+                        plot_config['title'] = original_title.format(model=model,benchmark=benchmark)
+                        plt.stacked_bar_plot({model:epoch_data}, ["" for _ in range(len(epoch_data[0]))], plot_config, filename=savefig)
+                        index += 1
         elif config['metrics'][metric]['type'] == 'violin':
             title = metric
             if 'title' in config['metrics'][metric]:
