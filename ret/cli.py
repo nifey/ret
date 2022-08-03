@@ -235,23 +235,13 @@ def plot(ctx, benchmarks, models, metrics, savefig):
                         plt.stacked_bar_plot({model:epoch_data}, ["" for _ in range(len(epoch_data[0]))], plot_config, filename=savefig)
                         index += 1
         elif config['metrics'][metric]['type'] == 'violin':
-            title = metric
-            if 'title' in config['metrics'][metric]:
-                title = config['metrics'][metric]['title']
-            fig, ax = mplt.subplots()
-            ax.set_title(f"{title}")
-            ax.set_xticks(range(1,len(benchmarks)+1), benchmarks)
-            for model in models:
-                plot_data = []
-                for benchmark in benchmarks:
-                    plot_data.append([])
-                for benchmark in benchmarks:
-                    run_dir = os.path.join(data_dir, model, benchmark)
-                    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
-                    data = list(map(float, data.strip().split(" ")))
-                    plot_data[benchmarks.index(benchmark)] = data
-                ax.violinplot(plot_data, showmeans=True)
-            mplt.show()
+            with ThreadPoolExecutor() as e:
+                data = e.map(data_read_function, itertools.product(models,benchmarks))
+                data = np.array(list(e.map (lambda y: [float(z) for z in y],
+                                            e.map(lambda x: x.rstrip().split(" "), data))), dtype=list)
+                data = data.reshape(len(models), len(benchmarks))
+            plot_data = dict(zip(model_names,data.tolist()))
+            plt.violin_plot(plot_data, benchmarks, plot_config, filename=savefig)
         elif config['metrics'][metric]['type'] == 'lines_per_run':
             if 'title' in config['metrics'][metric]:
                 title = config['metrics'][metric]['title']

@@ -167,10 +167,30 @@ def stacked_bar_plot(data, xticks, plot_config, filename=None):
 
     save_or_show_figure(plot_config, filename)
 
-def violin_plot(data, title=None, xticks=None, filename=None):
-    plt.violinplot(data, showmeans=True)
-    plt.title(title or "Violin Plot")
-    if xticks:
-        plt.xticks(np.arange(len(xticks))+1, xticks)
-    plt.legend()
-    show_or_save_figure(plt, filename)
+def violin_plot(data, xticks, plot_config, filename=None):
+    """Create a violin plot
+
+    :param data: Dictionary with data to plot (model => [list of values for each benchmark])
+    :type data: dict
+
+    :param xticks: List of benchmarks
+    :type xticks: list
+
+    :param plot_config: Plot configuration
+    :type plot_config: dict
+
+    :param filename: File name to save the plot
+    :type filename: str
+    """
+    fig, ax = generic_plot(plot_config)
+    set_plot_xticks(ax, xticks, plot_config, data)
+
+    showmeans = False
+    if 'show_means' in plot_config:
+        showmeans = plot_config['show_means']
+
+    for model in data.keys():
+        model_data = data[model]
+        plt.violinplot(model_data, positions=(list(range(len(xticks)))), showmeans=showmeans)
+
+    save_or_show_figure(plot_config, filename)
