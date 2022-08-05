@@ -3,6 +3,15 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Default plot configs
+default_plot_config = {
+    "show_legend": True,
+    "ygrid": True,
+
+    # Bar plot
+    "gmean": False,
+}
+
 def calc_gmean(numbers):
     sum_of_logs = functools.reduce(lambda x, y: x+y,
                               map(math.log, numbers))

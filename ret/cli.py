@@ -184,7 +184,10 @@ def plot(ctx, benchmarks, models, metrics, savefig):
 
     for metric in metrics:
         data_read_function = partial(get_model_benchmark_data, config=config, metric=metric)
-        plot_config = config['metrics'][metric]
+        if 'default_plot_config' in config:
+            plot_config = plt.default_plot_config | config['default_plot_config'] | config['metrics'][metric]
+        else:
+            plot_config = plt.default_plot_config | config['metrics'][metric]
         if plot_config['type'] == 'bar':
             with ThreadPoolExecutor() as e:
                 data = e.map(data_read_function, itertools.product(models,benchmarks))
