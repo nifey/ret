@@ -1,5 +1,6 @@
 import click
 import os
+import fnmatch
 import subprocess
 import yaml
 import itertools
@@ -126,6 +127,18 @@ def get_model_benchmark_data(mb_tuple, config, metric):
     data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
     return data
 
+def process_glob_patterns(full_list, comma_separated_list):
+    data = comma_separated_list.split(",")
+    new_data = []
+    for item in data:
+        for match_item in fnmatch.filter(full_list, item):
+            if match_item not in new_data:
+                new_data.append(match_item)
+    for item in new_data:
+        print(f"{item} ", end='')
+    print()
+    return list(new_data)
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to plot")
@@ -136,16 +149,14 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
+    print("Benchmarks to plot: ",end='')
     if benchmarks:
-        benchmarks = benchmarks.split(",")
+        benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
     else:
         benchmarks = config['benchmarks']
-    print("Benchmarks to plot: ",end='')
-    for benchmark in benchmarks:
-        print(f"{benchmark} ", end='')
-    print()
 
-    models = models.split(",")
+    print("Models to plot: ",end='')
+    models = process_glob_patterns(config['models'], models)
     model_names = []
     if 'model_names' in config:
         for model in models:
@@ -156,11 +167,6 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     else:
         for model in models:
             model_names.append(model)
-
-    print("Models to plot: ",end='')
-    for model_name in model_names:
-        print (f"{model_name} ",end='')
-    print()
 
     metrics = metrics.split(",")
     metrics_to_calculate = []
