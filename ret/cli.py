@@ -24,6 +24,18 @@ def cli(ctx):
             print("Error in parsing retconfig.yml")
             exit(0)
 
+def run_script(script, arguments, capture_output=False):
+    # Run hook and retrieve return value
+    command = [script]
+    command.extend(arguments)
+    completed_process = subprocess.run(command, capture_output=capture_output)
+    returncode = completed_process.returncode
+    if returncode != 0:
+        print(f"{script} failed with error code {returncode}")
+        exit(0)
+    if capture_output:
+        return str(completed_process.stdout, 'UTF-8')
+
 def run_hook(config, hook_name, arguments, capture_output=False):
     # Check if hook exists in config and in filesystem
     if hook_name not in config['hooks']:
@@ -32,16 +44,7 @@ def run_hook(config, hook_name, arguments, capture_output=False):
     if not os.path.exists(script):
         print(f"Script {script} does not exist")
         exit(0)
-    # Run hook and retrieve return value
-    command = [script]
-    command.extend(arguments)
-    completed_process = subprocess.run(command, capture_output=capture_output)
-    returncode = completed_process.returncode
-    if returncode != 0:
-        print(f"{hook_name} hook failed with error code {returncode}")
-        exit(0)
-    if capture_output:
-        return str(completed_process.stdout, 'UTF-8')
+    return run_script(script, arguments, capture_output)
 
 def execute_run(benchmark, config, model, data_dir):
     # Create a folder for this run
@@ -124,7 +127,7 @@ def get_model_benchmark_data(mb_tuple, config, metric):
     model, benchmark = mb_tuple
     data_dir = config['data_dir']
     run_dir = os.path.join(data_dir, model, benchmark)
-    data = run_hook(config, 'get_metric', [model, benchmark, run_dir, metric], capture_output=True)
+    data = run_script(config['hooks']['get_metric'], [model, benchmark, run_dir, metric], capture_output=True)
     return data
 
 def process_glob_patterns(full_list, comma_separated_list):
