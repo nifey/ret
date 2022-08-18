@@ -123,11 +123,10 @@ def run(ctx, benchmarks, models, j):
 
     run_hook(config, 'post_batch', [model_names, data_dir])
 
-def get_model_benchmark_data(mb_tuple, config, metric):
+def get_model_benchmark_data(mb_tuple, data_dir, script, metric):
     model, benchmark = mb_tuple
-    data_dir = config['data_dir']
     run_dir = os.path.join(data_dir, model, benchmark)
-    data = run_script(config['hooks']['get_metric'], [model, benchmark, run_dir, metric], capture_output=True)
+    data = run_script(script, [model, benchmark, run_dir, metric], capture_output=True)
     return data
 
 def process_glob_patterns(full_list, comma_separated_list):
@@ -192,7 +191,7 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     print()
 
     for metric in metrics:
-        data_read_function = partial(get_model_benchmark_data, config=config, metric=metric)
+        data_read_function = partial(get_model_benchmark_data, data_dir=config['data_dir'], script=config['hooks']['get_metric'], metric=metric)
         if 'default_plot_config' in config:
             plot_config = plt.default_plot_config | config['default_plot_config'] | config['metrics'][metric]
         else:
