@@ -71,6 +71,18 @@ def execute_in_parallel(model_benchmark, config, data_dir):
     model, benchmark = model_benchmark
     execute_run(benchmark, config, model, data_dir)
 
+def process_glob_patterns(full_list, comma_separated_list):
+    data = comma_separated_list.split(",")
+    new_data = []
+    for item in data:
+        for match_item in fnmatch.filter(full_list, item):
+            if match_item not in new_data:
+                new_data.append(match_item)
+    for item in new_data:
+        print(f"{item} ", end='')
+    print()
+    return list(new_data)
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to run")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to run")
@@ -80,21 +92,15 @@ def run(ctx, benchmarks, models, j):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
+    print("Benchmarks to run: ",end='')
     if benchmarks:
-        benchmarks = benchmarks.split(",")
+        benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
     else:
         benchmarks = config['benchmarks']
-    print("Benchmarks to run: ",end='')
-    for benchmark in benchmarks:
-        print(f"{benchmark} ", end='')
-    print()
 
     model_names = models
-    models = models.split(",")
     print("Models to run: ",end='')
-    for model in models:
-        print(f"{model} ", end='')
-    print()
+    models = process_glob_patterns(config['models'], models)
 
     run_hook(config, 'pre_batch', [model_names, data_dir])
 
@@ -128,18 +134,6 @@ def get_model_benchmark_data(mb_tuple, data_dir, script, metric):
     run_dir = os.path.join(data_dir, model, benchmark)
     data = run_script(script, [model, benchmark, run_dir, metric], capture_output=True)
     return data
-
-def process_glob_patterns(full_list, comma_separated_list):
-    data = comma_separated_list.split(",")
-    new_data = []
-    for item in data:
-        for match_item in fnmatch.filter(full_list, item):
-            if match_item not in new_data:
-                new_data.append(match_item)
-    for item in new_data:
-        print(f"{item} ", end='')
-    print()
-    return list(new_data)
 
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
