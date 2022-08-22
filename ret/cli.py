@@ -1,5 +1,7 @@
 import click
 import os
+import jinja2
+import inspect
 import fnmatch
 import subprocess
 import yaml
@@ -135,13 +137,99 @@ def get_model_benchmark_data(mb_tuple, data_dir, script, metric):
     data = run_script(script, [model, benchmark, run_dir, metric], capture_output=True)
     return data
 
+def generate_plot_script(models, benchmarks, metric_name, config, savefig, filename):
+    environment = jinja2.Environment(loader = jinja2.PackageLoader("ret"))
+    template = environment.get_template("plot_script.py")
+
+    # Generate plot config
+    if 'default_plot_config' in config:
+        plot_config = plt.default_plot_config | config['default_plot_config'] | config['metrics'][metric_name]
+    else:
+        plot_config = plt.default_plot_config | config['metrics'][metric_name]
+    plot_config_string = "plot_config = {}\n"
+    for key in plot_config:
+        if type(plot_config[key]) == str:
+            plot_config_string = plot_config_string + f"plot_config[\"{key}\"] = \"{plot_config[key]}\"\n"
+        else:
+            plot_config_string = plot_config_string + f"plot_config[\"{key}\"] = {plot_config[key]}\n"
+    plot_type = config['metrics'][metric_name]['type']
+
+    # Generate string of all functions needed for plotting
+    util_functions = [plt.calc_gmean,
+                      plt.save_or_show_figure,
+                      plt.generic_plot,
+                      plt.set_plot_xticks,
+                      run_script,
+                      get_model_benchmark_data]
+    if plot_type == 'bar':
+        util_functions.extend([plt.bar_plot])
+    if plot_type == 'stacked_bar':
+        util_functions.extend([plt.stacked_bar_plot])
+    if plot_type == 'violin':
+        util_functions.extend([plt.violin_plot])
+    util_functions_string = ""
+    for function in util_functions:
+        util_functions_string = util_functions_string + inspect.getsource(function) + "\n"
+
+    # Code to read data and plot
+    if plot_type == 'bar':
+        plotting_code = """data_read_function = partial(get_model_benchmark_data, data_dir=data_dir, script=get_metric, metric=metric_name)
+with ThreadPoolExecutor() as e:
+    data = list(e.map(data_read_function, itertools.product(models,benchmarks)))
+    data = np.array(list(e.map(lambda x: float(x), data)))
+    data = data.reshape(len(models), len(benchmarks))
+plot_data = dict(zip(model_names,data.tolist()))
+bar_plot(plot_data, benchmarks, plot_config, filename=output_file_name)"""
+    elif plot_type == 'stacked_bar':
+        plotting_code = """data_read_function = partial(get_model_benchmark_data, data_dir=data_dir, script=get_metric, metric=metric_name)
+with ThreadPoolExecutor() as e:
+    data = e.map(data_read_function, itertools.product(models,benchmarks))
+    data = np.array(list(e.map (lambda y: [float(z) for z in y],
+                                e.map(lambda x: x.rstrip().split(","), data))), dtype=list)
+    data = data.reshape(len(models), len(benchmarks), -1)
+    transposed_data = []
+    for model_data in data:
+        transposed_data.append(model_data.transpose().tolist())
+plot_data = dict(zip(model_names,transposed_data))
+stacked_bar_plot(plot_data, benchmarks, plot_config, filename=output_file_name)"""
+    elif plot_type == 'violin':
+        plotting_code = """data_read_function = partial(get_model_benchmark_data, data_dir=data_dir, script=get_metric, metric=metric_name)
+with ThreadPoolExecutor() as e:
+    data = e.map(data_read_function, itertools.product(models,benchmarks))
+    data = np.array(list(e.map (lambda y: [float(z) for z in y],
+                                e.map(lambda x: x.rstrip().split(" "), data))), dtype=list)
+    data = data.reshape(len(models), len(benchmarks))
+plot_data = dict(zip(model_names,data.tolist()))
+violin_plot(plot_data, benchmarks, plot_config, filename=output_file_name)"""
+    else:
+        print(f"Generating plot scripts is currently not supported for {plot_type} plots")
+        exit()
+
+    if savefig:
+        savefig = f"'{savefig}'"
+
+    with open(filename, "w") as outfile:
+        outfile.write(template.render(
+            models = models,
+            benchmarks = benchmarks,
+            metric_name = f"'{metric_name}'",
+            data_dir = f"'{config['data_dir']}'",
+            get_metric = f"'{config['hooks']['get_metric']}'",
+            output_file_name = savefig,
+            model_names = config['model_names'],
+            plot_config = plot_config_string,
+            util_functions = util_functions_string,
+            plotting_code = plotting_code,
+        ))
+
 @cli.command()
 @click.option("--benchmarks", "-b", help="Comma separated list of benchmarks to plot")
 @click.option("--models", "-m", required=True, help="Comma separated list of models to plot")
 @click.option("--metrics", "-M", required=True, help="Comma separated list of metrics to plot")
 @click.option("--savefig", "-s", help="Filename to save the plot. If this option is not specified, the plot is displayed")
+@click.option("--genplot", "-g", help="Generate a python plot script with the given file name")
 @click.pass_context
-def plot(ctx, benchmarks, models, metrics, savefig):
+def plot(ctx, benchmarks, models, metrics, savefig, genplot):
     config = ctx.obj['config']
     data_dir = config['data_dir']
 
@@ -183,6 +271,13 @@ def plot(ctx, benchmarks, models, metrics, savefig):
     for metric in metrics:
         print(f"{metric} ", end='')
     print()
+
+    if genplot:
+        if len(metrics) != 1:
+            print("Plot script generation only works with a single metric")
+            exit()
+        generate_plot_script(models, benchmarks, metrics[0], config, savefig, filename=genplot)
+        exit()
 
     for metric in metrics:
         data_read_function = partial(get_model_benchmark_data, data_dir=config['data_dir'], script=config['hooks']['get_metric'], metric=metric)
