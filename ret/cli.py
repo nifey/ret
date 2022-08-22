@@ -6,7 +6,7 @@ import yaml
 import itertools
 import numpy as np
 import matplotlib.pyplot as mplt
-import plot as plt
+import ret.plot as plt
 
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
