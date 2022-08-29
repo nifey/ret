@@ -20,6 +20,14 @@ get_metric = {{ get_metric }}
 output_file_name = {{ output_file_name }}
 model_names = {{ model_names }}
 
+renamed_model_names = []
+for model in models:
+    if model in model_names:
+        renamed_model_names.append(model_names[model])
+    else:
+        renamed_model_names.append(model)
+model_names = renamed_model_names
+
 # Plot config
 {{ plot_config }}
 
