@@ -134,9 +134,11 @@ def bar_plot(data, xticks, plot_config, filename=None):
     show_gmean = config_value(plot_config, 'gmean', False)
 
     if show_gmean:
-        for model in data.keys():
-            data[model].append(calc_gmean(data[model]))
         xticks.append("gmean")
+        for model in data.keys():
+            gmean_value = calc_gmean(data[model])
+            data[model].append(gmean_value)
+            print(f"Gmean for {model}: {round(gmean_value,5)}")
 
     start_x = np.arange(len(xticks)) * (len(data) * bar_width + (len(data) - 1) * intra_bar_gap + inter_bar_gap)
     xticks_positions = start_x + (len(data) * bar_width + (len(data) - 1) * intra_bar_gap) / 2.0 - (bar_width/2.0)
