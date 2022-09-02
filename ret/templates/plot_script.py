@@ -44,6 +44,8 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE)
 plt.rc('legend', fontsize=MEDIUM_SIZE)
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
+hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**', '/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+
 # Util functions
 {{ util_functions }}
 

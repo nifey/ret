@@ -3,6 +3,8 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**','/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+
 # Default plot configs
 default_plot_config = {
     "show_legend": True,
@@ -132,6 +134,7 @@ def bar_plot(data, xticks, plot_config, filename=None):
     xticks_rotation = config_value(plot_config, 'xticks_rotation', 0)
     xticks_ha = config_value(plot_config, 'xticks_horizontal_alignment', 'center')
     show_gmean = config_value(plot_config, 'gmean', False)
+    show_hatch = config_value(plot_config, 'show_hatch', False)
 
     if show_gmean:
         xticks.append("gmean")
@@ -147,7 +150,10 @@ def bar_plot(data, xticks, plot_config, filename=None):
     for i, model in enumerate(data.keys()):
         current_plot_data = data[model]
         x_values = start_x + i*(bar_width+intra_bar_gap)
-        ax.bar(x_values, current_plot_data, width=bar_width, label=model)
+        chosen_hatch = None
+        if show_hatch:
+            chosen_hatch = hatches[i]
+        ax.bar(x_values, current_plot_data, width=bar_width, label=model, hatch=chosen_hatch)
         max_val = ax.get_ylim()[1]
         for item_i, value in enumerate(current_plot_data):
             if value > max_val:
