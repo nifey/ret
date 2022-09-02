@@ -99,6 +99,12 @@ def set_plot_xticks(ax, xticks, plot_config, data):
         xticks_ha = plot_config['xticks_horizontal_alignment']
     ax.set_xticks(np.arange(len(xticks)), xticks, rotation=xticks_rotation, ha=xticks_ha)
 
+def config_value(plot_config, name, default_value):
+    if name in plot_config:
+        return plot_config[name]
+    else:
+        return default_value
+
 def bar_plot(data, xticks, plot_config, filename=None):
     """Create a Bar plot
 
@@ -115,27 +121,44 @@ def bar_plot(data, xticks, plot_config, filename=None):
     :type filename: str
     """
     fig, ax = generic_plot(plot_config)
-    set_plot_xticks(ax, xticks, plot_config, data)
 
-    annotate_outliers = False
-    if 'annotate_outliers' in plot_config:
-        annotate_outliers = plot_config['annotate_outliers']
+    # Bar plot config values
+    bar_width = config_value(plot_config, 'bar_width', 1)
+    intra_bar_gap = config_value(plot_config, 'intra_bar_gap', 0.1)
+    inter_bar_gap = config_value(plot_config, 'inter_bar_gap', 0.5)
+    annotate_outliers = config_value(plot_config, 'annotate_outliers', False)
+    annotate_all = config_value(plot_config, 'annotate_all', False)
+    annotation_gap = config_value(plot_config, 'annotation_gap', 0.01)
+    xticks_rotation = config_value(plot_config, 'xticks_rotation', 0)
+    xticks_ha = config_value(plot_config, 'xticks_horizontal_alignment', 'center')
+    show_gmean = config_value(plot_config, 'gmean', False)
 
-    total_width = 0.8
-    bar_width = total_width/len(data)
+    if show_gmean:
+        for model in data.keys():
+            data[model].append(calc_gmean(data[model]))
+        xticks.append("gmean")
+
+    start_x = np.arange(len(xticks)) * (len(data) * bar_width + (len(data) - 1) * intra_bar_gap + inter_bar_gap)
+    xticks_positions = start_x + (len(data) * bar_width + (len(data) - 1) * intra_bar_gap) / 2.0 - (bar_width/2.0)
+    ax.set_xticks(xticks_positions, xticks, rotation=xticks_rotation, ha=xticks_ha)
 
     for i, model in enumerate(data.keys()):
         current_plot_data = data[model]
-        start_offset = (total_width/2) - (2*i+1)*bar_width/2
-        ax.bar(np.arange(len(current_plot_data)) - start_offset, current_plot_data, width=bar_width, label=model)
-        if annotate_outliers:
-            for item_i, value in enumerate(current_plot_data):
-                max_val = ax.get_ylim()[1]
-                if value > max_val:
-                    # FIXME accurate position calculation
+        x_values = start_x + i*(bar_width+intra_bar_gap)
+        ax.bar(x_values, current_plot_data, width=bar_width, label=model)
+        max_val = ax.get_ylim()[1]
+        for item_i, value in enumerate(current_plot_data):
+            if value > max_val:
+                if annotate_all or annotate_outliers:
                     ax.annotate(str(round(value,2)),
-                                 xy=(item_i - total_width/2 + (2*i+1)*(bar_width/2) - start_offset, max_val - (max_val*0.02)),
-                                 ha='center').draggable()
+                                xy=(x_values[item_i], max_val + annotation_gap),
+                                annotation_clip=False,
+                                ha='center', va='bottom',rotation=90,size=15).draggable()
+            elif annotate_all:
+                ax.annotate(str(round(value,2)),
+                            xy=(x_values[item_i], value + annotation_gap),
+                            annotation_clip=False,
+                            ha='center', va='bottom',rotation=90,size=15).draggable()
 
     save_or_show_figure(plot_config, filename)
 
