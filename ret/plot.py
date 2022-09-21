@@ -3,7 +3,19 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**','/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 14
+plt.rc('axes', axisbelow=True)
+plt.rc('font', size=SMALL_SIZE)
+plt.rc('axes', titlesize=MEDIUM_SIZE)
+plt.rc('axes', labelsize=MEDIUM_SIZE)
+plt.rc('xtick', labelsize=MEDIUM_SIZE)
+plt.rc('ytick', labelsize=MEDIUM_SIZE)
+plt.rc('legend', fontsize=MEDIUM_SIZE)
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
+hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**', '/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
 
 # Default plot configs
 default_plot_config = {
@@ -153,17 +165,18 @@ def bar_plot(data, xticks, plot_config, filename=None):
         chosen_hatch = None
         if show_hatch:
             chosen_hatch = hatches[i]
-        ax.bar(x_values, current_plot_data, width=bar_width, label=model, hatch=chosen_hatch)
+        ax.bar(x_values, current_plot_data, width=bar_width, label=model, hatch=chosen_hatch, alpha=.99)
         max_val = ax.get_ylim()[1]
         for item_i, value in enumerate(current_plot_data):
+            label = str.format("{:.2f}",round(value,2))
             if value > max_val:
                 if annotate_all or annotate_outliers:
-                    ax.annotate(str(round(value,2)),
+                    ax.annotate(label,
                                 xy=(x_values[item_i], max_val + annotation_gap),
                                 annotation_clip=False,
                                 ha='center', va='bottom',rotation=90,size=15).draggable()
             elif annotate_all:
-                ax.annotate(str(round(value,2)),
+                ax.annotate(label,
                             xy=(x_values[item_i], value + annotation_gap),
                             annotation_clip=False,
                             ha='center', va='bottom',rotation=90,size=15).draggable()

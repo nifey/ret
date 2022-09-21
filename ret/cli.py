@@ -158,15 +158,15 @@ def generate_plot_script(models, benchmarks, metric_name, config, savefig, filen
     util_functions = [plt.calc_gmean,
                       plt.save_or_show_figure,
                       plt.generic_plot,
-                      plt.set_plot_xticks,
+                      plt.config_value,
                       run_script,
                       get_model_benchmark_data]
     if plot_type == 'bar':
         util_functions.extend([plt.bar_plot])
     if plot_type == 'stacked_bar':
-        util_functions.extend([plt.stacked_bar_plot])
+        util_functions.extend([plt.set_plot_xticks, plt.stacked_bar_plot])
     if plot_type == 'violin':
-        util_functions.extend([plt.violin_plot])
+        util_functions.extend([plt.set_plot_xticks, plt.violin_plot])
     util_functions_string = ""
     for function in util_functions:
         util_functions_string = util_functions_string + inspect.getsource(function) + "\n"
@@ -207,6 +207,8 @@ violin_plot(plot_data, benchmarks, plot_config, filename=output_file_name)"""
 
     if savefig:
         savefig = f"'{savefig}'"
+    if 'model_names' not in config:
+        config['model_names'] = {}
 
     with open(filename, "w") as outfile:
         outfile.write(template.render(
