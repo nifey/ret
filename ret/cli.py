@@ -137,15 +137,22 @@ def get_model_benchmark_data(mb_tuple, data_dir, script, metric):
     data = run_script(script, [model, benchmark, run_dir, metric], capture_output=True)
     return data
 
+def merge_dicts(list_of_dicts):
+    new_dict = {}
+    for dictionary in list_of_dicts:
+        for item in dictionary:
+            new_dict[item] = dictionary[item]
+    return new_dict
+
 def generate_plot_script(models, benchmarks, metric_name, config, savefig, filename):
     environment = jinja2.Environment(loader = jinja2.PackageLoader("ret"))
     template = environment.get_template("plot_script.py")
 
     # Generate plot config
     if 'default_plot_config' in config:
-        plot_config = plt.default_plot_config | config['default_plot_config'] | config['metrics'][metric_name]
+        plot_config = merge_dicts([plt.default_plot_config, config['default_plot_config'], config['metrics'][metric_name]])
     else:
-        plot_config = plt.default_plot_config | config['metrics'][metric_name]
+        plot_config = merge_dicts([plt.default_plot_config, config['metrics'][metric_name]])
     plot_config_string = "plot_config = {}\n"
     for key in plot_config:
         if type(plot_config[key]) == str:
@@ -284,9 +291,9 @@ def plot(ctx, benchmarks, models, metrics, savefig, genplot):
     for metric in metrics:
         data_read_function = partial(get_model_benchmark_data, data_dir=config['data_dir'], script=config['hooks']['get_metric'], metric=metric)
         if 'default_plot_config' in config:
-            plot_config = plt.default_plot_config | config['default_plot_config'] | config['metrics'][metric]
+            plot_config = merge_dicts([plt.default_plot_config, config['default_plot_config'], config['metrics'][metric]])
         else:
-            plot_config = plt.default_plot_config | config['metrics'][metric]
+            plot_config = merge_dicts([plt.default_plot_config, config['metrics'][metric]])
         if plot_config['type'] == 'bar':
             with ThreadPoolExecutor() as e:
                 data = e.map(data_read_function, itertools.product(models,benchmarks))
