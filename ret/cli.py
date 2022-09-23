@@ -95,10 +95,9 @@ def run(ctx, benchmarks, models, j):
     data_dir = config['data_dir']
 
     print("Benchmarks to run: ",end='')
-    if benchmarks:
-        benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
-    else:
-        benchmarks = config['benchmarks']
+    if not benchmarks:
+        benchmarks = "*"
+    benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
 
     model_names = models
     print("Models to run: ",end='')
@@ -244,10 +243,9 @@ def plot(ctx, benchmarks, models, metrics, savefig, genplot):
     data_dir = config['data_dir']
 
     print("Benchmarks to plot: ",end='')
-    if benchmarks:
-        benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
-    else:
-        benchmarks = config['benchmarks']
+    if not benchmarks:
+        benchmarks = "*"
+    benchmarks = process_glob_patterns(config['benchmarks'], benchmarks)
 
     print("Models to plot: ",end='')
     models = process_glob_patterns(config['models'], models)
