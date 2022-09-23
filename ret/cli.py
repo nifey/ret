@@ -11,7 +11,7 @@ import matplotlib.pyplot as mplt
 import ret.plot as plt
 
 from functools import partial
-from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 @click.group()
 @click.pass_context
@@ -106,13 +106,14 @@ def run(ctx, benchmarks, models, j):
 
     run_hook(config, 'pre_batch', [model_names, data_dir])
 
-    # Create a ProcessPoolExecutor to run in parallel
+    # Create a ThreadPoolExecutor to run in parallel
     if config['run_contraint'] != 'serial':
         if j:
             j = int(j)
-            executor = ProcessPoolExecutor(max_workers=j)
+            executor = ThreadPoolExecutor(max_workers=j)
         else:
-            executor = ProcessPoolExecutor()
+            executor = ThreadPoolExecutor()
+    print(executor)
 
     if config['run_contraint'] == 'serial':
         for model in models:

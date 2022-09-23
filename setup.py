@@ -29,6 +29,6 @@ setup(
     install_requires = [requirements],
     entry_points = '''
         [console_scripts]
-        ret=ret.cli.cli
+        ret=ret.cli:cli
     '''
 )
