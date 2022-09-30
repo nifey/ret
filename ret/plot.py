@@ -203,6 +203,7 @@ def stacked_bar_plot(data, xticks, plot_config, filename=None):
 
     models = data.keys()
     colors = {}
+    selected_hatches = {}
     bar_width = 0.8
     plot_bar_labels = plot_config['stack_labels']
     per_model_width = bar_width / len(models)
@@ -212,10 +213,13 @@ def stacked_bar_plot(data, xticks, plot_config, filename=None):
         x_vals = initial_x_vals + j * per_model_width
         for i, stack_bar in enumerate(plot_bar_labels):
             if stack_bar not in colors:
-                bar = ax.bar(x_vals, data[model][i], label=stack_bar, bottom=bottom, width=per_model_width)
+                selected_hatches[stack_bar] = None
+                if plot_config['show_hatch']:
+                    selected_hatches[stack_bar] = hatches[i]
+                bar = ax.bar(x_vals, data[model][i], label=stack_bar, hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width)
                 colors[stack_bar] = bar.patches[0].get_facecolor()
             else:
-                ax.bar(x_vals, data[model][i], color=colors[stack_bar], bottom=bottom, width=per_model_width)
+                ax.bar(x_vals, data[model][i], color=colors[stack_bar], hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width)
             bottom += data[model][i]
 
     save_or_show_figure(plot_config, filename)
