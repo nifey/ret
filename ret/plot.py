@@ -216,10 +216,10 @@ def stacked_bar_plot(data, xticks, plot_config, filename=None):
                 selected_hatches[stack_bar] = None
                 if plot_config['show_hatch']:
                     selected_hatches[stack_bar] = hatches[i]
-                bar = ax.bar(x_vals, data[model][i], label=stack_bar, hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width)
+                bar = ax.bar(x_vals, data[model][i], label=stack_bar, hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width, alpha=.99)
                 colors[stack_bar] = bar.patches[0].get_facecolor()
             else:
-                ax.bar(x_vals, data[model][i], color=colors[stack_bar], hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width)
+                ax.bar(x_vals, data[model][i], color=colors[stack_bar], hatch=selected_hatches[stack_bar], bottom=bottom, width=per_model_width, alpha=.99)
             bottom += data[model][i]
 
     save_or_show_figure(plot_config, filename)
