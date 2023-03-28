@@ -252,3 +252,24 @@ def violin_plot(data, xticks, plot_config, filename=None):
         plt.violinplot(model_data, positions=(list(range(len(xticks)))), showmeans=showmeans)
 
     save_or_show_figure(plot_config, filename)
+
+def line_plot(data, plot_config, filename=None):
+    """Create a line plot
+
+    :param data: Dictionary with data to plot (line_label => [y_value for each n]))
+    :type data: dict
+
+    :param plot_config: Plot configuration
+    :type plot_config: dict
+
+    :param filename: File name to save the plot
+    :type filename: str
+    """
+    fig, ax = generic_plot(plot_config)
+
+    for line_label in data.keys():
+        line_data = data[line_label]
+        x_vals = np.array(list(range(1,len(line_data)+1)))/float(len(line_data))
+        ax.plot(x_vals, line_data, label=line_label)
+
+    save_or_show_figure(plot_config, filename)

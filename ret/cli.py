@@ -376,6 +376,18 @@ def plot(ctx, benchmarks, models, metrics, savefig, genplot):
                             ax.plot(x_vals, plot_data[i])
                     ax.legend()
                     mplt.show()
+        elif config['metrics'][metric]['type'] == 'line':
+            with ThreadPoolExecutor() as e:
+                data = e.map(data_read_function, itertools.product(models,benchmarks))
+                data = np.array(list(e.map (lambda y: [float(z) for z in y],
+                                            e.map(lambda x: x.rstrip().split(","), data))), dtype=list)
+                data = data.reshape(len(models) * len(benchmarks), -1)
+            if len(models) == 1:
+                labels = benchmarks
+            else:
+                labels = map(lambda x: x[0] + " - " + x[1], itertools.product(models, benchmarks))
+            plot_data = dict(zip(labels,data.tolist()))
+            plt.line_plot(plot_data, plot_config, filename=savefig)
         elif config['metrics'][metric]['type'] == 'script':
             for model in models:
                 for benchmark in benchmarks:
