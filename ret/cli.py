@@ -112,7 +112,6 @@ def run(ctx, benchmarks, models, j):
             executor = ThreadPoolExecutor(max_workers=j)
         else:
             executor = ThreadPoolExecutor()
-    print(executor)
 
     if config['run_contraint'] == 'serial':
         for model in models:
