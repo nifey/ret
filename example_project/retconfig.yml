@@ -15,9 +15,25 @@ run_contraint: 'parallel'
 
 # Hooks
 hooks:
+  # Before a batch of runs are executed
   pre_batch: 'scripts/pre_batch.py'
+
+  # Before a run is executed
   pre_run: 'scripts/pre_run.py'
+
+  # Running the benchmark
   run: 'scripts/run.py'
+
+  # After the run is completed
   post_run: 'scripts/post_run.py'
+
+  # After the batch is completed
   post_batch: 'scripts/post_batch.py'
+
+  # Script to extract metrics from run logs
   get_metric: 'scripts/get_metric.py'
+
+# Metrics
+metrics:
+  metric1:
+    type: "bar"
