@@ -21,6 +21,7 @@ hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**', '/', '\
 default_plot_config = {
     "show_legend": True,
     "ygrid": True,
+    "show_hatch": False,
 
     # Bar plot
     "gmean": False,
