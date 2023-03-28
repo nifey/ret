@@ -6,15 +6,15 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = fh.read()
 
 setup(
-    name = 'researchtool',
+    name = 'rettool',
     version = '0.0.1',
     license = 'MIT',
     description = 'Tool to help in running experiments and saving logs',
     long_description = long_description,
     long_description_content_type = "text/markdown",
-    url = 'https://github.com/nifey/researchtool',
+    url = 'https://github.com/nifey/ret',
     project_urls={
-        "Bug Tracker": "https://github.com/nifey/researchtool/issues",
+        "Bug Tracker": "https://github.com/nifey/ret/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -1,4 +1,4 @@
-# REsearch Tool (RET)
+# Ret Tool
 
 Tool to help in running experiments and saving logs
 
@@ -8,6 +8,11 @@ For each project, we need to write scripts that are run at different hook points
 Ret can also retrieve metrics from logs and present them as a plot (from a set of standard plot types).
 This will be useful to quickly visualize experiment results and compare select models on select metrics.
 Ret can also generate a standard plot script that can then be customized.
+
+## Installation
+```python
+pip install rettool
+```
 
 ## Usage
 - ret run -m model1,model2 -b benchmark1,benchmark2
